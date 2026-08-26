@@ -3,702 +3,487 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Rectificador de Media Onda - Diodo de Potencia</title>
+    <title>Simulador de Diodo de Potencia | Electrónica de Potencia</title>
     <style>
         :root {
-            --bg-color: #0f111a;
-            --panel-bg: #141722;
-            --panel-border: #3c465a;
-            --grid-color: #1e2332;
-            --color-vin: #00ff80;
-            --color-vout: #ff3c64;
-            --color-wire: #8c96aa;
-            --color-current: #ffe650;
-            --text-color: #e2e8f0;
-            --text-muted: #94a3b8;
-            --accent-color: #3b82f6;
+            --bg-color: #0a0c10;
+            --panel-bg: #12161f;
+            --border-color: #1e2638;
+            --accent-green: #00ff88;
+            --accent-pink: #ff0055;
+            --accent-yellow: #ffd000;
+            --accent-blue: #00d0ff;
+            --text-main: #e0e6ed;
+            --text-muted: #7e8b9b;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-        }
-
-        body {
-            font-family: 'Consolas', 'Courier New', monospace;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            font-family: 'SF Pro Display', -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            -webkit-user-select: none;
             user-select: none;
         }
 
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
         header {
-            background-color: var(--panel-bg);
-            border-bottom: 2px solid var(--panel-border);
-            padding: 10px 20px;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: 60px;
         }
 
         h1 {
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--text-color);
-        }
-
-        .main-container {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #ffffff;
             display: flex;
-            flex: 1;
-            height: calc(100vh - 60px);
-            overflow: hidden;
+            align-items: center;
+            gap: 10px;
         }
 
-        .workspace {
+        h1::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background: var(--accent-green);
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        .container {
             display: flex;
             flex-direction: column;
-            flex: 1;
-            height: 100%;
+            gap: 16px;
+            width: 100%;
+            max-width: 1000px;
         }
 
-        .canvas-container {
-            flex: 1;
-            position: relative;
-            border-bottom: 2px solid var(--panel-border);
-        }
-
-        .canvas-container:last-child {
-            border-bottom: none;
+        .canvas-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
         }
 
         canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
             display: block;
+            width: 100%;
+            height: 520px;
         }
 
-        .sidebar {
-            width: 320px;
-            background-color: var(--panel-bg);
-            border-left: 2px solid var(--panel-border);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow-y: auto;
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            padding: 16px 20px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
         }
 
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .control-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-        }
-
-        .control-label {
-            font-size: 13px;
-            font-weight: bold;
+            font-size: 0.8rem;
+            font-weight: 600;
             color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .control-value {
-            font-size: 13px;
-            font-weight: bold;
-            color: var(--text-color);
+            color: var(--accent-blue);
+            font-family: 'SF Mono', Consolas, Monaco, monospace;
         }
 
-        input[type="range"] {
+        input[type=range] {
+            -webkit-appearance: none;
             width: 100%;
+            background: #1c2333;
             height: 6px;
-            background: #2d3748;
             border-radius: 3px;
             outline: none;
-            -webkit-appearance: none;
         }
 
-        input[type="range"]::-webkit-slider-thumb {
+        input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 16px;
             height: 16px;
             border-radius: 50%;
-            background: var(--accent-color);
+            background: var(--text-main);
             cursor: pointer;
-            border: 2px solid var(--text-color);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+            transition: transform 0.1s;
         }
 
-        .btn {
-            background-color: #2d3748;
-            border: 1px solid var(--panel-border);
-            color: var(--text-color);
-            padding: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            font-family: inherit;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: background-color 0.2s;
-        }
-
-        .btn:hover {
-            background-color: #3e4e68;
-        }
-
-        .btn-active {
-            background-color: var(--accent-color);
-            border-color: #60a5fa;
-        }
-
-        .btn-active:hover {
-            background-color: #2563eb;
-        }
-
-        .status-box {
-            border: 1px solid var(--panel-border);
-            background-color: rgba(15, 17, 26, 0.5);
-            padding: 12px;
-            border-radius: 4px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            font-size: 12px;
-        }
-
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .status-state {
-            font-weight: bold;
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #ffffff;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>RECTIFICADOR DE MEDIA ONDA - SIMULACIÓN DINÁMICA</h1>
-        <div style="font-size: 12px; color: var(--text-muted);">DIODO DE POTENCIA</div>
+        <h1>RECTIFICADOR DE MEDIA ONDA · DIODO DE POTENCIA</h1>
     </header>
 
-    <div class="main-container">
-        <div class="workspace">
-            <!-- Panel Superior: Osciloscopio -->
-            <div class="canvas-container" id="osc-container">
-                <canvas id="oscCanvas"></canvas>
-            </div>
-            <!-- Panel Inferior: Esquema y Animación -->
-            <div class="canvas-container" id="sch-container">
-                <canvas id="schCanvas"></canvas>
-            </div>
+    <div class="container">
+        <div class="canvas-card">
+            <canvas id="simCanvas" width="1000" height="520"></canvas>
         </div>
 
-        <!-- Panel Lateral de Control -->
-        <div class="sidebar">
-            <div style="font-weight: bold; border-bottom: 1px solid var(--panel-border); padding-bottom: 8px;">
-                CONTROLES
-            </div>
-
-            <!-- Controles de simulación -->
-            <button class="btn btn-active" id="btnPlayPause">PAUSAR</button>
-
-            <!-- Velocidad de simulación -->
+        <div class="controls-grid">
             <div class="control-group">
                 <div class="control-header">
-                    <span class="control-label">Velocidad Simulación</span>
-                    <span class="control-value" id="valSimSpeed">1.0x</span>
+                    <span>Tensión Pico ($V_p$)</span>
+                    <span class="control-value" id="valVp">12.0 V</span>
                 </div>
-                <input type="range" id="simSpeed" min="0.1" max="3.0" step="0.1" value="1.0">
+                <input type="range" id="paramVp" min="1" max="30" step="0.5" value="12">
             </div>
 
-            <!-- Amplitud Vin -->
             <div class="control-group">
                 <div class="control-header">
-                    <span class="control-label">Amplitud de Entrada Vp</span>
-                    <span class="control-value" id="valVpeak">12.0 V</span>
+                    <span>Frecuencia ($f$)</span>
+                    <span class="control-value" id="valFreq">1.00 Hz</span>
                 </div>
-                <input type="range" id="vPeak" min="2.0" max="20.0" step="0.5" value="12.0">
+                <input type="range" id="paramFreq" min="0.2" max="3" step="0.1" value="1.0">
             </div>
 
-            <!-- Frecuencia -->
             <div class="control-group">
                 <div class="control-header">
-                    <span class="control-label">Frecuencia Señal</span>
-                    <span class="control-value" id="valFreq">0.8 Hz</span>
+                    <span>Caída Directa ($V_F$)</span>
+                    <span class="control-value" id="valVf">0.70 V</span>
                 </div>
-                <input type="range" id="freqHz" min="0.1" max="3.0" step="0.1" value="0.8">
+                <input type="range" id="paramVf" min="0.0" max="2.0" step="0.05" value="0.7">
             </div>
 
-            <!-- Caída del diodo -->
             <div class="control-group">
                 <div class="control-header">
-                    <span class="control-label">Caída Directa V_F</span>
-                    <span class="control-value" id="valVdDrop">0.7 V</span>
+                    <span>Resistencia ($R_L$)</span>
+                    <span class="control-value" id="valR">10.0 Ω</span>
                 </div>
-                <input type="range" id="vDiodeDrop" min="0.0" max="3.0" step="0.1" value="0.7">
-            </div>
-
-            <!-- Resistencia -->
-            <div class="control-group">
-                <div class="control-header">
-                    <span class="control-label">Resistencia de Carga R</span>
-                    <span class="control-value" id="valRload">10.0 Ω</span>
-                </div>
-                <input type="range" id="rLoad" min="2.0" max="50.0" step="1.0" value="10.0">
-            </div>
-
-            <!-- Caja de Estado Dinámico -->
-            <div class="status-box">
-                <div class="status-item">
-                    <span class="control-label">Estado Diodo:</span>
-                    <span class="status-state" id="stateDiodo" style="color: var(--color-vin);">BLOQUEO (OFF)</span>
-                </div>
-                <div class="status-item">
-                    <span class="control-label">Tensión Entrada:</span>
-                    <span id="stateVin">0.00 V</span>
-                </div>
-                <div class="status-item">
-                    <span class="control-label">Tensión Carga:</span>
-                    <span id="stateVout">0.00 V</span>
-                </div>
-                <div class="status-item">
-                    <span class="control-label">Corriente Diodo:</span>
-                    <span id="stateId">0.00 A</span>
-                </div>
+                <input type="range" id="paramR" min="2" max="50" step="1" value="10">
             </div>
         </div>
     </div>
 
     <script>
-        // Configuración inicial del circuito
-        const circuit = {
-            vPeak: 12.0,
-            freqHz: 0.8,
-            vDiodeDrop: 0.7,
-            rLoad: 10.0,
-            simSpeed: 1.0,
-            isPlaying: true
-        };
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
 
-        // Elementos del DOM y listeners
-        const btnPlayPause = document.getElementById('btnPlayPause');
-        const inputs = {
-            simSpeed: { input: document.getElementById('simSpeed'), value: document.getElementById('valSimSpeed'), unit: 'x', key: 'simSpeed' },
-            vPeak: { input: document.getElementById('vPeak'), value: document.getElementById('valVpeak'), unit: ' V', key: 'vPeak' },
-            freqHz: { input: document.getElementById('freqHz'), value: document.getElementById('valFreq'), unit: ' Hz', key: 'freqHz' },
-            vDiodeDrop: { input: document.getElementById('vDiodeDrop'), value: document.getElementById('valVdDrop'), unit: ' V', key: 'vDiodeDrop' },
-            rLoad: { input: document.getElementById('rLoad'), value: document.getElementById('valRload'), unit: ' Ω', key: 'rLoad' }
-        };
+        // Inputs
+        const inVp = document.getElementById('paramVp');
+        const inFreq = document.getElementById('paramFreq');
+        const inVf = document.getElementById('paramVf');
+        const inR = document.getElementById('paramR');
 
-        btnPlayPause.addEventListener('click', () => {
-            circuit.isPlaying = !circuit.isPlaying;
-            if (circuit.isPlaying) {
-                btnPlayPause.textContent = 'PAUSAR';
-                btnPlayPause.classList.add('btn-active');
-            } else {
-                btnPlayPause.textContent = 'REANUDAR';
-                btnPlayPause.classList.remove('btn-active');
-            }
-        });
+        const valVp = document.getElementById('valVp');
+        const valFreq = document.getElementById('valFreq');
+        const valVf = document.getElementById('valVf');
+        const valR = document.getElementById('valR');
 
-        Object.keys(inputs).forEach(key => {
-            const item = inputs[key];
-            item.input.addEventListener('input', (e) => {
-                const val = parseFloat(e.target.value);
-                circuit[item.key] = val;
-                item.value.textContent = val.toFixed(1) + item.unit;
-            });
-        });
-
-        // Canvases y contextos
-        const oscCanvas = document.getElementById('oscCanvas');
-        const schCanvas = document.getElementById('schCanvas');
-        const ctxOsc = oscCanvas.getContext('2d');
-        const ctxSch = schCanvas.getContext('2d');
-
-        // Historial de muestras para el osciloscopio
-        const maxHistory = 400;
+        // Estado del circuito y buffers
+        let time = 0;
+        let lastTimestamp = 0;
+        const waveHistoryMax = 400;
         const vinHistory = [];
         const voutHistory = [];
 
-        // Inicializar o rellenar historial con ceros
-        for(let i=0; i<maxHistory; i++) {
-            vinHistory.push(0);
-            voutHistory.push(0);
+        // Geometría del circuito (Esquemático inferior)
+        const loopNodes = [
+            {x: 220, y: 460}, // Inferior Izq (Tierra / Retorno)
+            {x: 220, y: 340}, // Superior Izq (Fuente)
+            {x: 460, y: 340}, // Ánodo diodo
+            {x: 540, y: 340}, // Cátodo diodo
+            {x: 780, y: 340}, // Superior Der (Carga)
+            {x: 780, y: 460}, // Inferior Der
+            {x: 220, y: 460}  // Cierre
+        ];
+
+        let totalLength = 0;
+        const segments = [];
+        for (let i = 0; i < loopNodes.length - 1; i++) {
+            const dx = loopNodes[i+1].x - loopNodes[i].x;
+            const dy = loopNodes[i+1].y - loopNodes[i].y;
+            const len = Math.hypot(dx, dy);
+            segments.push({ p1: loopNodes[i], p2: loopNodes[i+1], len: len });
+            totalLength += len;
         }
 
-        // Definición de nodos esquemáticos fijos
-        let loopNodes = [];
-        let particlesPos = [];
-        const numParticles = 30;
-        for (let i = 0; i < numParticles; i++) {
-            particlesPos.push(i / numParticles);
-        }
+        // Partículas de corriente
+        const numParticles = 28;
+        const particles = Array.from({length: numParticles}, (_, i) => i / numParticles);
 
-        // Ajustar tamaño del canvas dinámicamente
-        function resizeCanvases() {
-            const oscParent = document.getElementById('osc-container');
-            const schParent = document.getElementById('sch-container');
-
-            oscCanvas.width = oscParent.clientWidth;
-            oscCanvas.height = oscParent.clientHeight;
-            schCanvas.width = schParent.clientWidth;
-            schCanvas.height = schParent.clientHeight;
-
-            // Recalcular posiciones del circuito según el tamaño del panel
-            const w = schCanvas.width;
-            const h = schCanvas.height;
-            const left = w * 0.25;
-            const right = w * 0.75;
-            const top = h * 0.3;
-            const bottom = h * 0.75;
-            const dCenter = w * 0.5;
-
-            loopNodes = [
-                {x: left, y: bottom},    // Retorno inferior izquierdo
-                {x: left, y: top},       // Superior izquierdo (fuente)
-                {x: dCenter - 40, y: top},// Ánodo diodo
-                {x: dCenter + 40, y: top},// Cátodo diodo
-                {x: right, y: top},      // Resistencia superior
-                {x: right, y: bottom},   // Resistencia inferior
-                {x: left, y: bottom}     // Cierre de lazo
-            ];
-        }
-
-        window.addEventListener('resize', resizeCanvases);
-        resizeCanvases();
-
-        // Calcular distancia total del circuito
-        function getPathLength() {
-            let len = 0;
-            for (let i = 0; i < loopNodes.length - 1; i++) {
-                const dx = loopNodes[i+1].x - loopNodes[i].x;
-                const dy = loopNodes[i+1].y - loopNodes[i].y;
-                len += Math.hypot(dx, dy);
-            }
-            return len;
-        }
-
-        // Obtener posición (x, y) en el lazo cerrado a partir de un parámetro normalizado t [0, 1]
-        function getPosAlongLoop(normT) {
-            const totalLen = getPathLength();
-            const targetDist = ((normT % 1.0 + 1.0) % 1.0) * totalLen;
+        function getLoopPosition(normT) {
+            let targetDist = (normT % 1.0) * totalLength;
+            if (targetDist < 0) targetDist += totalLength;
             let accum = 0;
-            for (let i = 0; i < loopNodes.length - 1; i++) {
-                const p1 = loopNodes[i];
-                const p2 = loopNodes[i+1];
-                const segLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-                if (accum + segLen >= targetDist) {
-                    const rem = (targetDist - accum) / segLen;
+            for (let seg of segments) {
+                if (accum + seg.len >= targetDist) {
+                    let r = (targetDist - accum) / seg.len;
                     return {
-                        x: p1.x + rem * (p2.x - p1.x),
-                        y: p1.y + rem * (p2.y - p1.y)
+                        x: seg.p1.x + r * (seg.p2.x - seg.p1.x),
+                        y: seg.p1.y + r * (seg.p2.y - seg.p1.y)
                     };
                 }
-                accum += segLen;
+                accum += seg.len;
             }
             return loopNodes[0];
         }
 
-        // Resolución eléctrica de magnitudes en un instante dado
-        function solveCircuit(t) {
-            const vin = circuit.vPeak * Math.sin(2 * Math.PI * circuit.freqHz * t);
-            let vout = 0;
-            let current = 0;
-            let diodoState = "BLOQUEO (OFF)";
-
-            if (vin > circuit.vDiodeDrop) {
-                vout = vin - circuit.vDiodeDrop;
-                current = vout / circuit.rLoad;
-                diodoState = "CONDUCCIÓN (ON)";
+        function drawGlowLine(p1, p2, color, width, glow) {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            if (glow > 0) {
+                ctx.shadowColor = color;
+                ctx.shadowBlur = glow;
             }
-            return { vin, vout, current, diodoState };
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+            ctx.restore();
         }
 
-        let simTime = 0;
-        let lastTime = 0;
+        function render(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
+            lastTimestamp = timestamp;
 
-        function animate(timestamp) {
-            if (!lastTime) lastTime = timestamp;
-            let dt = (timestamp - lastTime) / 1000.0;
-            lastTime = timestamp;
+            const Vp = parseFloat(inVp.value);
+            const freq = parseFloat(inFreq.value);
+            const Vf = parseFloat(inVf.value);
+            const R = parseFloat(inR.value);
 
-            // Limitar pasos de tiempo muy grandes si se cambia de pestaña
-            if (dt > 0.1) dt = 0.1;
+            valVp.innerText = `${Vp.toFixed(1)} V`;
+            valFreq.innerText = `${freq.toFixed(2)} Hz`;
+            valVf.innerText = `${Vf.toFixed(2)} V`;
+            valR.innerText = `${R.toFixed(1)} Ω`;
 
-            if (circuit.isPlaying) {
-                simTime += dt * circuit.simSpeed;
+            time += dt;
+
+            // Modelo matemático instantáneo
+            const vin = Vp * Math.sin(2 * Math.PI * freq * time);
+            let vout = 0;
+            let current = 0;
+            let isConduction = false;
+
+            if (vin > Vf) {
+                vout = vin - Vf;
+                current = vout / R;
+                isConduction = true;
             }
 
-            const { vin, vout, current, diodoState } = solveCircuit(simTime);
-
-            // Actualizar caja de estados del DOM
-            document.getElementById('stateDiodo').textContent = diodoState;
-            document.getElementById('stateDiodo').style.color = current > 0 ? '#00ff80' : '#ff3c64';
-            document.getElementById('stateVin').textContent = vin.toFixed(2) + ' V';
-            document.getElementById('stateVout').textContent = vout.toFixed(2) + ' V';
-            document.getElementById('stateId').textContent = current.toFixed(2) + ' A';
-
-            // Actualizar historial del osciloscopio
-            if (circuit.isPlaying) {
-                vinHistory.push(vin);
+            vinHistory.push(vin);
+            voutHistory.push(vout);
+            if (vinHistory.length > waveHistoryMax) {
                 vinHistory.shift();
-                voutHistory.push(vout);
                 voutHistory.shift();
             }
 
-            // Dibujar Paneles
-            drawOscilloscope(vin, vout, current);
-            drawSchematic(diodoState, current, dt);
+            // Limpieza
+            ctx.fillStyle = "#0c0f17";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            requestAnimationFrame(animate);
-        }
+            // ==========================================
+            // 1. PANEL OSCILOSCOPIO (0 a 240 px)
+            // ==========================================
+            const oscRect = { x: 30, y: 20, w: 940, h: 200 };
+            ctx.fillStyle = "#10141f";
+            ctx.fillRect(oscRect.x, oscRect.y, oscRect.w, oscRect.h);
 
-        function drawOscilloscope(vin, vout, current) {
-            const w = oscCanvas.width;
-            const h = oscCanvas.height;
-            ctxOsc.clearRect(0, 0, w, h);
-
-            // Fondo
-            ctxOsc.fillStyle = '#0f111a';
-            ctxOsc.fillRect(0, 0, w, h);
-
-            // Cuadrícula tenue
-            ctxOsc.strokeStyle = '#1e2332';
-            ctxOsc.lineWidth = 1;
-            const gridSpacing = 40;
-            const midY = h / 2;
-
-            for (let x = 0; x < w; x += gridSpacing) {
-                ctxOsc.beginPath();
-                ctxOsc.moveTo(x, 0);
-                ctxOsc.lineTo(x, h);
-                ctxOsc.stroke();
+            // Grilla
+            ctx.strokeStyle = "#1b2333";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let x = oscRect.x; x <= oscRect.x + oscRect.w; x += 47) {
+                ctx.moveTo(x, oscRect.y); ctx.lineTo(x, oscRect.y + oscRect.h);
             }
-            for (let y = 0; y < h; y += gridSpacing) {
-                ctxOsc.beginPath();
-                ctxOsc.moveTo(0, y);
-                ctxOsc.lineTo(w, y);
-                ctxOsc.stroke();
+            for (let y = oscRect.y; y <= oscRect.y + oscRect.h; y += 25) {
+                ctx.moveTo(oscRect.x, y); ctx.lineTo(oscRect.x + oscRect.w, y);
             }
+            ctx.stroke();
 
-            // Eje central de referencia
-            ctxOsc.strokeStyle = '#3c465a';
-            ctxOsc.lineWidth = 1.5;
-            ctxOsc.beginPath();
-            ctxOsc.moveTo(0, midY);
-            ctxOsc.lineTo(w, midY);
-            ctxOsc.stroke();
+            // Eje central 0V
+            const midY = oscRect.y + oscRect.h / 2;
+            ctx.strokeStyle = "#2c3b59";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(oscRect.x, midY);
+            ctx.lineTo(oscRect.x + oscRect.w, midY);
+            ctx.stroke();
 
-            // Dibujar Trazas (Vin y Vout)
-            const voltScale = (h * 0.4) / 20.0; // Escalado dinámico basado en un rango de +/- 20V
-            const dx = w / maxHistory;
+            // Trazado de señales con resplandor
+            const vScale = 2.8; // Escala vertical (px/V)
+            const dx = oscRect.w / waveHistoryMax;
 
-            // Traza de Vin (Verde)
-            ctxOsc.strokeStyle = '#00ff80';
-            ctxOsc.lineWidth = 2;
-            ctxOsc.beginPath();
-            for (let i = 0; i < maxHistory; i++) {
-                const px = i * dx;
-                const py = midY - vinHistory[i] * voltScale;
-                if (i === 0) ctxOsc.moveTo(px, py);
-                else ctxOsc.lineTo(px, py);
+            // Curva Vin (Verde)
+            ctx.save();
+            ctx.strokeStyle = "#00ff88";
+            ctx.shadowColor = "#00ff88";
+            ctx.shadowBlur = 8;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < vinHistory.length; i++) {
+                const px = oscRect.x + i * dx;
+                const py = midY - vinHistory[i] * vScale;
+                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
             }
-            ctxOsc.stroke();
+            ctx.stroke();
+            ctx.restore();
 
-            // Traza de Vout (Magenta/Rojo)
-            ctxOsc.strokeStyle = '#ff3c64';
-            ctxOsc.lineWidth = 2;
-            ctxOsc.beginPath();
-            for (let i = 0; i < maxHistory; i++) {
-                const px = i * dx;
-                const py = midY - voutHistory[i] * voltScale;
-                if (i === 0) ctxOsc.moveTo(px, py);
-                else ctxOsc.lineTo(px, py);
+            // Curva Vout (Magenta)
+            ctx.save();
+            ctx.strokeStyle = "#ff0055";
+            ctx.shadowColor = "#ff0055";
+            ctx.shadowBlur = 10;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let i = 0; i < voutHistory.length; i++) {
+                const px = oscRect.x + i * dx;
+                const py = midY - voutHistory[i] * vScale;
+                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
             }
-            ctxOsc.stroke();
+            ctx.stroke();
+            ctx.restore();
 
-            // Leyendas y Valores Instantáneos
-            ctxOsc.fillStyle = '#e2e8f0';
-            ctxOsc.font = 'bold 12px Consolas';
-            ctxOsc.fillText(`Vin (Entrada): ${vin.toFixed(2)} V`, 20, 25);
-            ctxOsc.fillText(`Vout (Carga): ${vout.toFixed(2)} V`, 220, 25);
-            ctxOsc.fillText(`Id (Corriente): ${current.toFixed(2)} A`, 420, 25);
+            // Lecturas en pantalla del Osciloscopio
+            ctx.font = "600 13px 'SF Mono', Consolas, monospace";
+            ctx.fillStyle = "#00ff88";
+            ctx.fillText(`Vin:  ${(vin >= 0 ? "+" : "") + vin.toFixed(2)} V`, oscRect.x + 20, oscRect.y + 26);
+            ctx.fillStyle = "#ff0055";
+            ctx.fillText(`Vout: ${(vout >= 0 ? "+" : "") + vout.toFixed(2)} V`, oscRect.x + 180, oscRect.y + 26);
+            ctx.fillStyle = "#ffd000";
+            ctx.fillText(`Id:   ${current.toFixed(2)} A`, oscRect.x + 340, oscRect.y + 26);
 
-            // Escala del eje vertical
-            ctxOsc.fillStyle = '#94a3b8';
-            ctxOsc.font = '10px Consolas';
-            ctxOsc.fillText('+20V', 10, midY - 20 * voltScale + 12);
-            ctxOsc.fillText('0V', 10, midY - 3);
-            ctxOsc.fillText('-20V', 10, midY + 20 * voltScale - 4);
-        }
-
-        function drawSchematic(diodoState, current, dt) {
-            const w = schCanvas.width;
-            const h = schCanvas.height;
-            ctxSch.clearRect(0, 0, w, h);
-
-            // Fondo panel
-            ctxSch.fillStyle = '#141722';
-            ctxSch.fillRect(0, 0, w, h);
-
-            // Dibujar cables principales del lazo
-            ctxSch.strokeStyle = '#8c96aa';
-            ctxSch.lineWidth = 3;
-            ctxSch.beginPath();
-            for (let i = 0; i < loopNodes.length; i++) {
-                const node = loopNodes[i];
-                if (i === 0) ctxSch.moveTo(node.x, node.y);
-                else ctxSch.lineTo(node.x, node.y);
+            // ==========================================
+            // 2. PANEL ESQUEMÁTICO (240 a 520 px)
+            // ==========================================
+            
+            // Conductores base
+            ctx.strokeStyle = "#2a364f";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(loopNodes[0].x, loopNodes[0].y);
+            for (let i = 1; i < loopNodes.length; i++) {
+                ctx.lineTo(loopNodes[i].x, loopNodes[i].y);
             }
-            ctxSch.stroke();
+            ctx.stroke();
 
-            // 1. Fuente AC (nodo izquierdo)
-            const leftX = loopNodes[1].x;
-            const midY = (loopNodes[1].y + loopNodes[0].y) / 2;
-            ctxSch.fillStyle = '#141722';
-            ctxSch.beginPath();
-            ctxSch.arc(leftX, midY, 25, 0, 2 * Math.PI);
-            ctxSch.fill();
-            ctxSch.strokeStyle = '#8c96aa';
-            ctxSch.lineWidth = 2.5;
-            ctxSch.stroke();
+            // Fuente AC (220, 400)
+            const srcPos = { x: 220, y: 400 };
+            ctx.fillStyle = "#0c0f17";
+            ctx.beginPath();
+            ctx.arc(srcPos.x, srcPos.y, 24, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.strokeStyle = "#5a6e8c";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.font = "bold 18px sans-serif";
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "center";
+            ctx.fillText("~", srcPos.x, srcPos.y + 6);
+            ctx.font = "11px 'SF Mono', monospace";
+            ctx.fillStyle = "#7e8b9b";
+            ctx.fillText("AC SRC", srcPos.x - 40, srcPos.y + 4);
 
-            // Símbolo senoidal (~ AC)
-            ctxSch.beginPath();
-            ctxSch.strokeStyle = '#e2e8f0';
-            ctxSch.lineWidth = 2;
-            for (let dx = -12; dx <= 12; dx++) {
-                const dy = 6 * Math.sin(dx * 0.25);
-                if (dx === -12) ctxSch.moveTo(leftX + dx, midY + dy);
-                else ctxSch.lineTo(leftX + dx, midY + dy);
-            }
-            ctxSch.stroke();
-            ctxSch.fillStyle = '#e2e8f0';
-            ctxSch.font = 'bold 12px Consolas';
-            ctxSch.fillText('Vin (~ AC)', leftX - 35, midY - 32);
+            // Diodo de Potencia (500, 340)
+            const dCenter = { x: 500, y: 340 };
+            ctx.fillStyle = "#0c0f17";
+            ctx.fillRect(dCenter.x - 30, dCenter.y - 25, 60, 50);
 
-            // 2. Diodo de Potencia (nodo superior, centrado)
-            const dCenter = w * 0.5;
-            const topY = loopNodes[1].y;
+            const diodeColor = isConduction ? "#00ff88" : "#ff0055";
+            ctx.save();
+            ctx.fillStyle = diodeColor;
+            ctx.strokeStyle = diodeColor;
+            ctx.shadowColor = diodeColor;
+            ctx.shadowBlur = isConduction ? 12 : 4;
+            
+            // Triángulo Ánodo
+            ctx.beginPath();
+            ctx.moveTo(dCenter.x - 14, dCenter.y - 14);
+            ctx.lineTo(dCenter.x - 14, dCenter.y + 14);
+            ctx.lineTo(dCenter.x + 14, dCenter.y);
+            ctx.closePath();
+            ctx.fill();
 
-            // Fondo del diodo
-            ctxSch.fillStyle = '#141722';
-            ctxSch.fillRect(dCenter - 35, topY - 25, 70, 50);
+            // Cátodo
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(dCenter.x + 14, dCenter.y - 15);
+            ctx.lineTo(dCenter.x + 14, dCenter.y + 15);
+            ctx.stroke();
+            ctx.restore();
 
-            // Color del diodo basado en el paso de corriente (Conducción / Bloqueo)
-            const activeColor = current > 0 ? '#00ff80' : '#ff3c64';
-            ctxSch.strokeStyle = activeColor;
-            ctxSch.fillStyle = activeColor;
+            // Etiqueta de estado del diodo
+            ctx.font = "600 12px 'SF Mono', monospace";
+            ctx.fillStyle = diodeColor;
+            ctx.textAlign = "center";
+            ctx.fillText(isConduction ? "ON (CONDUCCIÓN)" : "OFF (BLOQUEO)", dCenter.x, dCenter.y - 28);
 
-            // Triángulo de ánodo a cátodo
-            ctxSch.beginPath();
-            ctxSch.moveTo(dCenter - 18, topY - 18);
-            ctxSch.lineTo(dCenter - 18, topY + 18);
-            ctxSch.lineTo(dCenter + 15, topY);
-            ctxSch.closePath();
-            ctxSch.fill();
+            // Resistencia de Carga (780, 400)
+            const rPos = { x: 780, y: 400 };
+            ctx.fillStyle = "#0c0f17";
+            ctx.fillRect(rPos.x - 20, rPos.y - 35, 40, 70);
+            ctx.strokeStyle = "#00d0ff";
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(rPos.x - 12, rPos.y - 28, 24, 56);
+            ctx.font = "12px 'SF Mono', monospace";
+            ctx.fillStyle = "#00d0ff";
+            ctx.textAlign = "left";
+            ctx.fillText(`RL = ${R.toFixed(0)}Ω`, rPos.x + 22, rPos.y + 4);
 
-            // Barra cátodo
-            ctxSch.beginPath();
-            ctxSch.rect(dCenter + 15, topY - 18, 4, 36);
-            ctxSch.fill();
-
-            // Leyendas del Diodo
-            ctxSch.fillStyle = '#e2e8f0';
-            ctxSch.font = 'bold 12px Consolas';
-            ctxSch.fillText('Diodo D', dCenter - 25, topY - 28);
-            ctxSch.fillStyle = activeColor;
-            ctxSch.fillText(diodoState, dCenter - 50, topY + 33);
-
-            // 3. Resistencia de Carga (nodo derecho)
-            const rightX = loopNodes[4].x;
-            const rMidY = (loopNodes[4].y + loopNodes[5].y) / 2;
-
-            // Fondo para la resistencia
-            ctxSch.fillStyle = '#141722';
-            ctxSch.fillRect(rightX - 15, rMidY - 35, 30, 70);
-
-            // Cuerpo del resistor
-            ctxSch.strokeStyle = '#3b82f6';
-            ctxSch.lineWidth = 3;
-            ctxSch.strokeRect(rightX - 12, rMidY - 30, 24, 60);
-
-            // Líneas de detalle dentro del resistor (tipo devanado/bobina)
-            ctxSch.strokeStyle = '#3b82f6';
-            ctxSch.lineWidth = 1;
-            for(let ry = rMidY - 20; ry <= rMidY + 20; ry += 8) {
-                ctxSch.beginPath();
-                ctxSch.moveTo(rightX - 8, ry);
-                ctxSch.lineTo(rightX + 8, ry);
-                ctxSch.stroke();
-            }
-
-            ctxSch.fillStyle = '#e2e8f0';
-            ctxSch.font = 'bold 12px Consolas';
-            ctxSch.fillText(`R_load`, rightX + 22, rMidY - 10);
-            ctxSch.fillStyle = '#3b82f6';
-            ctxSch.fillText(`${circuit.rLoad.toFixed(0)} Ω`, rightX + 22, rMidY + 10);
-
-            // 4. Conexión a tierra (símbolo GND en el retorno inferior)
-            const gndX = (leftX + rightX) / 2;
-            const gndY = loopNodes[0].y;
-            ctxSch.strokeStyle = '#8c96aa';
-            ctxSch.lineWidth = 2;
-            ctxSch.beginPath();
-            ctxSch.moveTo(gndX, gndY);
-            ctxSch.lineTo(gndX, gndY + 15);
-            ctxSch.moveTo(gndX - 12, gndY + 15);
-            ctxSch.lineTo(gndX + 12, gndY + 15);
-            ctxSch.moveTo(gndX - 8, gndY + 19);
-            ctxSch.lineTo(gndX + 8, gndY + 19);
-            ctxSch.moveTo(gndX - 4, gndY + 23);
-            ctxSch.lineTo(gndX + 4, gndY + 23);
-            ctxSch.stroke();
-
-            // 5. Animación de flujo de corriente (Partículas)
-            // La velocidad del flujo es proporcional a la corriente actual
-            if (circuit.isPlaying) {
-                const maxCurrent = circuit.vPeak / circuit.rLoad;
-                const flowRate = (current / maxCurrent) * 0.35 * circuit.simSpeed;
-
-                for (let i = 0; i < particlesPos.length; i++) {
-                    if (current > 0) {
-                        particlesPos[i] = (particlesPos[i] + flowRate * dt) % 1.0;
-                    }
+            // Flujo de partículas dinámicas (electrones/corriente)
+            const particleSpeed = isConduction ? (current / (Vp / R)) * 0.45 : 0;
+            
+            for (let i = 0; i < particles.length; i++) {
+                if (isConduction) {
+                    particles[i] = (particles[i] + particleSpeed * dt) % 1.0;
                 }
+                const pos = getLoopPosition(particles[i]);
+
+                ctx.save();
+                ctx.fillStyle = isConduction ? "#ffd000" : "#4a5568";
+                if (isConduction) {
+                    ctx.shadowColor = "#ffd000";
+                    ctx.shadowBlur = 8;
+                }
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, isConduction ? 3.5 : 2, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.restore();
             }
 
-            // Dibujar las partículas en sus posiciones correspondientes
-            for (let i = 0; i < particlesPos.length; i++) {
-                const pos = getPosAlongLoop(particlesPos[i]);
-                ctxSch.beginPath();
-                ctxSch.arc(pos.x, pos.y, 4, 0, 2 * Math.PI);
-                ctxSch.fillStyle = '#ffe650';
-                ctxSch.shadowColor = '#ffe650';
-                ctxSch.shadowBlur = 6;
-                ctxSch.fill();
-                ctxSch.shadowBlur = 0; // Resetear sombra
-            }
+            requestAnimationFrame(render);
         }
 
-        // Iniciar bucle de animación
-        requestAnimationFrame(animate);
+        requestAnimationFrame(render);
     </script>
 </body>
 </html>
