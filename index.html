@@ -91,7 +91,7 @@
 
         .controls-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 14px;
             padding: 16px 20px;
             background: var(--panel-bg);
@@ -144,6 +144,38 @@
             transform: scale(1.2);
             background: #ffffff;
         }
+
+        .button-bar {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: #161b26;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: #202738;
+            border-color: #33415c;
+        }
+
+        .btn-active {
+            background: rgba(255, 0, 85, 0.15);
+            border-color: var(--accent-pink);
+            color: var(--accent-pink);
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -189,6 +221,19 @@
                 </div>
                 <input type="range" id="paramR" min="2" max="50" step="1" value="10">
             </div>
+
+            <div class="control-group">
+                <div class="control-header">
+                    <span>Velocidad Simulación</span>
+                    <span class="control-value" id="valSpeed">0.50x</span>
+                </div>
+                <input type="range" id="paramSpeed" min="0.1" max="2.0" step="0.05" value="0.5">
+            </div>
+
+            <div class="control-group button-bar">
+                <button class="btn" id="btnPause">Pausar</button>
+                <button class="btn" id="btnReset">Reiniciar</button>
+            </div>
         </div>
     </div>
 
@@ -196,32 +241,51 @@
         const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Inputs
+        // Controles de entrada
         const inVp = document.getElementById('paramVp');
         const inFreq = document.getElementById('paramFreq');
         const inVf = document.getElementById('paramVf');
         const inR = document.getElementById('paramR');
+        const inSpeed = document.getElementById('paramSpeed');
 
         const valVp = document.getElementById('valVp');
         const valFreq = document.getElementById('valFreq');
         const valVf = document.getElementById('valVf');
         const valR = document.getElementById('valR');
+        const valSpeed = document.getElementById('valSpeed');
+
+        const btnPause = document.getElementById('btnPause');
+        const btnReset = document.getElementById('btnReset');
 
         // Estado del circuito y buffers
         let time = 0;
         let lastTimestamp = 0;
+        let isPaused = false;
         const waveHistoryMax = 400;
-        const vinHistory = [];
-        const voutHistory = [];
+        let vinHistory = [];
+        let voutHistory = [];
 
-        // Geometría del circuito (Esquemático inferior)
+        // Botones de acción
+        btnPause.addEventListener('click', () => {
+            isPaused = !isPaused;
+            btnPause.innerText = isPaused ? "Reanudar" : "Pausar";
+            btnPause.classList.toggle('btn-active', isPaused);
+        });
+
+        btnReset.addEventListener('click', () => {
+            time = 0;
+            vinHistory = [];
+            voutHistory = [];
+        });
+
+        // Geometría del circuito
         const loopNodes = [
-            {x: 220, y: 460}, // Inferior Izq (Tierra / Retorno)
-            {x: 220, y: 340}, // Superior Izq (Fuente)
+            {x: 220, y: 460}, // Retorno inferior
+            {x: 220, y: 340}, // Fuente AC
             {x: 460, y: 340}, // Ánodo diodo
             {x: 540, y: 340}, // Cátodo diodo
-            {x: 780, y: 340}, // Superior Der (Carga)
-            {x: 780, y: 460}, // Inferior Der
+            {x: 780, y: 340}, // Carga superior
+            {x: 780, y: 460}, // Carga inferior
             {x: 220, y: 460}  // Cierre
         ];
 
@@ -256,36 +320,24 @@
             return loopNodes[0];
         }
 
-        function drawGlowLine(p1, p2, color, width, glow) {
-            ctx.save();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = width;
-            if (glow > 0) {
-                ctx.shadowColor = color;
-                ctx.shadowBlur = glow;
-            }
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
-            ctx.restore();
-        }
-
         function render(timestamp) {
             if (!lastTimestamp) lastTimestamp = timestamp;
-            const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
+            const dtRaw = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
             lastTimestamp = timestamp;
 
             const Vp = parseFloat(inVp.value);
             const freq = parseFloat(inFreq.value);
             const Vf = parseFloat(inVf.value);
             const R = parseFloat(inR.value);
+            const speed = parseFloat(inSpeed.value);
 
             valVp.innerText = `${Vp.toFixed(1)} V`;
             valFreq.innerText = `${freq.toFixed(2)} Hz`;
             valVf.innerText = `${Vf.toFixed(2)} V`;
             valR.innerText = `${R.toFixed(1)} Ω`;
+            valSpeed.innerText = `${speed.toFixed(2)}x`;
 
+            const dt = isPaused ? 0 : dtRaw * speed;
             time += dt;
 
             // Modelo matemático instantáneo
@@ -300,19 +352,21 @@
                 isConduction = true;
             }
 
-            vinHistory.push(vin);
-            voutHistory.push(vout);
-            if (vinHistory.length > waveHistoryMax) {
-                vinHistory.shift();
-                voutHistory.shift();
+            if (!isPaused) {
+                vinHistory.push(vin);
+                voutHistory.push(vout);
+                if (vinHistory.length > waveHistoryMax) {
+                    vinHistory.shift();
+                    voutHistory.shift();
+                }
             }
 
-            // Limpieza
+            // Limpieza de Canvas
             ctx.fillStyle = "#0c0f17";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // ==========================================
-            // 1. PANEL OSCILOSCOPIO (0 a 240 px)
+            // 1. PANEL OSCILOSCOPIO
             // ==========================================
             const oscRect = { x: 30, y: 20, w: 940, h: 200 };
             ctx.fillStyle = "#10141f";
@@ -373,7 +427,7 @@
             ctx.stroke();
             ctx.restore();
 
-            // Lecturas en pantalla del Osciloscopio
+            // Lecturas numéricas en el osciloscopio
             ctx.font = "600 13px 'SF Mono', Consolas, monospace";
             ctx.fillStyle = "#00ff88";
             ctx.fillText(`Vin:  ${(vin >= 0 ? "+" : "") + vin.toFixed(2)} V`, oscRect.x + 20, oscRect.y + 26);
@@ -383,10 +437,8 @@
             ctx.fillText(`Id:   ${current.toFixed(2)} A`, oscRect.x + 340, oscRect.y + 26);
 
             // ==========================================
-            // 2. PANEL ESQUEMÁTICO (240 a 520 px)
+            // 2. PANEL ESQUEMÁTICO
             // ==========================================
-            
-            // Conductores base
             ctx.strokeStyle = "#2a364f";
             ctx.lineWidth = 4;
             ctx.beginPath();
@@ -459,11 +511,11 @@
             ctx.textAlign = "left";
             ctx.fillText(`RL = ${R.toFixed(0)}Ω`, rPos.x + 22, rPos.y + 4);
 
-            // Flujo de partículas dinámicas (electrones/corriente)
+            // Partículas de corriente
             const particleSpeed = isConduction ? (current / (Vp / R)) * 0.45 : 0;
             
             for (let i = 0; i < particles.length; i++) {
-                if (isConduction) {
+                if (isConduction && !isPaused) {
                     particles[i] = (particles[i] + particleSpeed * dt) % 1.0;
                 }
                 const pos = getLoopPosition(particles[i]);
